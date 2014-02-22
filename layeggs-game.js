@@ -11,11 +11,12 @@ var Game = function() {
     FemBug(this, {
         center: {x: 50, y: 50},
         dest: {x: 40, y: 40},
-        player: true
+        player: false
     });
     MalBug(this, {
         center: {x: 150, y: 150},
-        dest: {x: 150, y: 160}
+        dest: {x: 150, y: 160},
+        player: true
     });
 
     //this.c.entities.create(Counter, {});
@@ -77,6 +78,8 @@ var MalBug = function (game, settings) {
         sizeMax: 20,
         fem: false,
         shouts: 1,
+        mating: false,
+        halosize: 1,
         speed: 1,
         acc: 1,
         ageMax: 5
@@ -96,6 +99,16 @@ var drawPlayerHalo = function (ctx, bug) {
     ctx.beginPath();
     ctx.arc(bug.center.x, bug.center.y, bug.size.x + 3, 0, 2 * Math.PI, false);
     ctx.strokeStyle = '#FF8';
+    ctx.lineWidth = 5;
+    ctx.stroke();
+};
+
+var drawMatingHalo = function (ctx, bug) {
+    bug.halosize += .25;
+    if (bug.halosize > 10) {bug.halosize = 1;}
+    ctx.beginPath();
+    ctx.arc(bug.center.x, bug.center.y, bug.size.x + bug.halosize, 0, 2 * Math.PI, false);
+    ctx.strokeStyle = '#F99';
     ctx.lineWidth = 3;
     ctx.stroke();
 };
@@ -106,6 +119,7 @@ var drawBug = function (ctx, bug) {
     ctx.fillStyle = bug.color;
     ctx.fill();
     if (bug.player) { drawPlayerHalo(ctx, bug); }
+    if (bug.mating) { drawMatingHalo(ctx, bug); }
 };
 
 var updateBug = function (dt, bug) {
@@ -144,7 +158,15 @@ var layEgg = function (bug) {
     }
 };
 
-var matingCall = function (bug) {};
+var matingCall = function (bug) {
+    if (bug.age > 2 && bug.shouts > 0) {
+        bug.shouts -= 1;
+        bug.mating = true;
+        for (b in bug.c.entities.all()) {
+
+        }
+    }
+};
 
 var bugGrowth = function (dt, bug) {
     // dividing by 200 is very quick
