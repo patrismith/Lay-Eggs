@@ -130,36 +130,49 @@ var aiControl = function (dt, bug) {};
 var layEgg = function (bug) {
     if (bug.age > 2 && bug.eggs > 0) {
         bug.eggs -= 1;
-        FemBug(bug, {
+        if (getRandomInt(0,1)) {
+            MalBug(bug, {
             center: { x: bug.center.x, y: bug.center.y },
             dest: {x: bug.center.x, y: bug.center.y }
         });
+        } else {
+            FemBug(bug, {
+                center: { x: bug.center.x, y: bug.center.y },
+                dest: {x: bug.center.x, y: bug.center.y }
+            });
+        }
     }
 };
 
 var matingCall = function (bug) {};
 
 var bugGrowth = function (dt, bug) {
+    // dividing by 200 is very quick
+    // dividing by 200000 is very slow
     bug.age += dt/1000;
+    // grow the bug
     if (bug.size.x < bug.sizeMax && !bug.dying ) {
-        bug.size.x = bug.age * 2;
-        bug.size.y = bug.age * 2;
-    }
-    if (bug.size.x > bug.sizeMax) {
+        bug.size.x += 0.1;
+        bug.size.y += 0.1;
+    } else if (bug.size.x > bug.sizeMax) {
+        // prevent the bug from growing larger
         bug.size.x = bug.sizeMax;
         bug.size.y = bug.sizeMax;
     }
+    // age the bug
     var intcolor = parseInt(bug.color.substr(1), 16);
+    // change color at certain age
     if (bug.age > 2 && intcolor > 548) {
         intcolor -= 128;
         if (intcolor < 548) {intcolor = 548;}
         bug.color = '#' + intcolor.toString(16);
     } else if (bug.age >= bug.ageMax) {
+        // shrink the bug until it's no more
+        // switch player if necessary, and delete the bug
         bug.dying = true;
         bug.size.x -= 1;
         bug.size.y -= 1;
         if (bug.dying && bug.size.x < 1) {
-            console.log('selecting new bug');
             if (bug.player) {
                 bug.player = false;
                 bug.c.lastbug.player = true;
