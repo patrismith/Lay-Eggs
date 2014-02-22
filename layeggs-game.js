@@ -11,12 +11,12 @@ var Game = function() {
     FemBug(this, {
         center: {x: 50, y: 50},
         dest: {x: 40, y: 40},
-        player: false
+        player: true
     });
     MalBug(this, {
         center: {x: 150, y: 150},
         dest: {x: 150, y: 160},
-        player: true
+        player: false
     });
 
     //this.c.entities.create(Counter, {});
@@ -28,6 +28,7 @@ var Bug = function (game, settings) {
     this.c.lastbug = this;
     this.player = false;
     //this.center = { x: 0, y: 0 };
+    this.moveTimer = 0;
     this.dest = { x: 0, y: 0 };
     this.vel = { x: 0, y: 0 };
     //this.size = { x: 0, y: 0 };
@@ -42,8 +43,10 @@ var Bug = function (game, settings) {
     this.draw = function (ctx) {
         drawBug(ctx, this);
     };
-    this.collision = function () {};
-    this.uncollision = function () {};
+    this.collision = function (other, type) {
+        collideBug(this, other, type);
+    };
+    //this.uncollision = function () {};
     this.update = function (dt) {
         updateBug(dt, this);
     };
@@ -129,6 +132,14 @@ var updateBug = function (dt, bug) {
     bugMovement(dt, bug);
 };
 
+var collideBug = function (bug, other, type) {
+    if (type === bug.c.collider.INITIAL) {
+        if (bug.fem && bug.age > 2 && other.mating) {
+            bug.fertilized = true;
+        }
+    }
+};
+
 var playerControl = function (dt, bug) {
     if (bug.c.inputter.isDown(bug.c.inputter.LEFT_MOUSE)) {
         bug.dest = bug.c.inputter.getMousePosition();
@@ -139,10 +150,23 @@ var playerControl = function (dt, bug) {
     }
 };
 
-var aiControl = function (dt, bug) {};
+var aiControl = function (dt, bug) {
+    bug.moveTimer += dt/2000;
+    if (bug.moveTimer > 2) {
+        bug.dest = { x: getRandomInt(0, 500), y: getRandomInt(0, 500) };
+        bug.moveTimer = 0;
+    }
+    if (bug.fem) {
+
+    } else {
+        if (bug.age > 2 && bug.shouts > 0) {
+            matingCall(bug);
+        }
+    }
+};
 
 var layEgg = function (bug) {
-    if (bug.age > 2 && bug.eggs > 0) {
+    if (bug.age > 2 && bug.fertilized && bug.eggs > 0) {
         bug.eggs -= 1;
         if (getRandomInt(0,1)) {
             MalBug(bug, {
@@ -162,20 +186,19 @@ var matingCall = function (bug) {
     if (bug.age > 2 && bug.shouts > 0) {
         bug.shouts -= 1;
         bug.mating = true;
-        for (b in bug.c.entities.all()) {
-
-        }
     }
 };
 
 var bugGrowth = function (dt, bug) {
     // dividing by 200 is very quick
     // dividing by 200000 is very slow
-    bug.age += dt/1000;
+    bug.age += dt/20000;
     // grow the bug
     if (bug.size.x < bug.sizeMax && !bug.dying ) {
-        bug.size.x += 0.1;
-        bug.size.y += 0.1;
+        // change this if changing the bug.age dt divisor above.
+        // need to use proper constants!!
+        bug.size.x += 0.001;
+        bug.size.y += 0.001;
     } else if (bug.size.x > bug.sizeMax) {
         // prevent the bug from growing larger
         bug.size.x = bug.sizeMax;
