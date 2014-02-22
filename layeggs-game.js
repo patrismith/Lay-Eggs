@@ -1,8 +1,140 @@
+// from stackoverflow
 var getRandomInt = function (min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-var Game = function() {
+// from html5canvastutorials
+var wrapText = function (context, text, x, y, maxWidth, lineHeight) {
+    var words = text.split(' ');
+    var line = '';
+    for (var n = 0; n < words.length; n++) {
+        var testLine = line + words[n] + ' ';
+        var metrics = context.measureText(testLine);
+        var testWidth = metrics.width;
+        if (testWidth > maxWidth && n > 0) {
+            context.fillText(line, x, y);
+            line = words[n] + ' ';
+            y += lineHeight;
+        } else {
+            line = testLine;
+        }
+    }
+    context.fillText(line, x, y);
+};
+
+var Start = function () {
+    this.width = 500;
+    this.height = 500;
+    this.c = new Coquette(this, "canvas", this.width, this.height, "#CFC");
+    StartButton(this, {});
+    HelpText(this, {
+        anchor: {x: 20, y: 20},
+        content: 'You are the Circle species. Your goal is to wipe out the Square species.'
+    });
+    HelpText(this, {
+        anchor: {x: 20, y: 80},
+        content: 'To move, click anywhere on this canvas.'
+    });
+    HelpText(this, {
+        anchor: {x: 20, y: 120},
+        content: 'To lay eggs or perform a mating call, press the space bar.'
+    });
+    HelpText(this, {
+        anchor: {x: 20, y: 160},
+        content: 'The female only gets five eggs. You must be fertilized to lay eggs. Collide with a male Circle performing the mating call to become fertilized.'
+    });
+    HelpText(this, {
+        anchor: {x: 20, y: 250},
+        content: 'The male only gets one mating call. Collide with a female Circle to fertilize.'
+    });
+    HelpText(this, {
+        anchor: {x: 20, y: 300},
+        content: 'Collide with a Square to destroy it. This will also destroy you.'
+    });
+    HelpText(this, {
+        anchor: {x: 20, y: 300},
+        content: 'When you die, control will switch to the youngest member of the Circle species.'
+    });
+};
+
+var Button = function (game, settings) {
+    this.c = game.c;
+    this.mouseover = false;
+    this.color = '#224';
+    this.draw = function (ctx) {
+        drawButton(ctx, this)
+    };
+    this.update = function (dt) {
+        updateButton(dt, this);
+    };
+    for (var i in settings) {
+        this[i] = settings[i];
+    }
+};
+
+var StartButton = function (game, settings) {
+    game.c.entities.create(Button, {
+        content: 'Start',
+        anchor: {x: 400, y: 400},
+        mouseover: {x: 390, y: 370, w: 75, h: 45}
+    });
+};
+
+var Text = function (game, settings) {
+    this.c = game.c;
+    this.color = '#224';
+    this.draw = function (ctx) {
+        drawText(ctx, this)
+    };
+    for (var i in settings) {
+        this[i] = settings[i];
+    };
+};
+
+var HelpText = function (game, settings) {
+    game.c.entities.create(Text, {
+        content: settings.content,
+        anchor: settings.anchor,
+        width: 250,
+        lineHeight: 15
+    });
+};
+
+var drawText = function (ctx, text) {
+    ctx.fillStyle = text.color;
+    ctx.font = "12pt Sans";
+    wrapText(ctx, text.content, text.anchor.x, text.anchor.y, text.width, text.lineHeight);
+}
+
+var drawButton = function (ctx, button) {
+    //ctx.beginPath();
+    //ctx.rect(button.mouseover.x, button.mouseover.y, button.mouseover.w, button.mouseover.h);
+    //ctx.stroke();
+    ctx.fillStyle = button.color;
+    ctx.font = "20pt Sans";
+    ctx.fillText(button.content, button.anchor.x, button.anchor.y);
+};
+
+var updateButton = function (dt, button) {
+    var position = button.c.inputter.getMousePosition();
+    if (position
+        && position.x > button.mouseover.x
+        && position.y > button.mouseover.y
+        && position.x < button.mouseover.x + button.mouseover.w
+        && position.y < button.mouseover.y + button.mouseover.h) {
+        button.color = '#557';
+        this.mouseover = true;
+    } else {
+        button.color = '#224';
+        this.mouseover = false;
+    }
+    if (this.mouseover) {
+        button.c = null;
+        new Game(false);
+    }
+};
+
+var Game = function () {
     this.width = 500;
     this.height = 500;
     this.c = new Coquette(this, "canvas", this.width, this.height, "#CFC");
