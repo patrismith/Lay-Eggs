@@ -68,7 +68,10 @@ var FemBug = function (game, settings) {
         fertilized: false,
         speed: 5,
         acc: 2,
-        ageMax: 10
+        ageMax: 10,
+        eggTimer: 0,
+        laidFem: false,
+        growthFactor: 0.001
     });
 };
 
@@ -85,7 +88,9 @@ var MalBug = function (game, settings) {
         halosize: 1,
         speed: 1,
         acc: 1,
-        ageMax: 5
+        ageMax: 7,
+        matingTimer: 0,
+        growthFactor: 0.005
     });
 };
 
@@ -157,9 +162,22 @@ var aiControl = function (dt, bug) {
         bug.moveTimer = 0;
     }
     if (bug.fem) {
-
+        if (bug.fertilized && bug.eggs > 0) {
+            bug.eggTimer += dt/2000;
+            if (bug.eggTimer > 10) {
+                layEgg(bug);
+                bug.eggTimer = 0;
+            }
+        }
     } else {
-        if (bug.age > 2 && bug.shouts > 0) {
+        if (bug.mating) {
+            bug.matingTimer += dt/2000;
+            if (bug.matingTimer > 10) {
+                bug.mating = false;
+                bug.matingTimer = 0;
+            }
+        }
+        if (bug.age > 2 && bug.shouts > 0 && !bug.mating) {
             matingCall(bug);
         }
     }
@@ -168,22 +186,24 @@ var aiControl = function (dt, bug) {
 var layEgg = function (bug) {
     if (bug.age > 2 && bug.fertilized && bug.eggs > 0) {
         bug.eggs -= 1;
-        if (getRandomInt(0,1)) {
+        if (bug.laidFem) {
             MalBug(bug, {
             center: { x: bug.center.x, y: bug.center.y },
             dest: {x: bug.center.x, y: bug.center.y }
         });
+            bug.laidFem = false;
         } else {
             FemBug(bug, {
                 center: { x: bug.center.x, y: bug.center.y },
                 dest: {x: bug.center.x, y: bug.center.y }
             });
+            bug.laidFem = true;
         }
     }
 };
 
 var matingCall = function (bug) {
-    if (bug.age > 2 && bug.shouts > 0) {
+    if (bug.age > 4 && bug.shouts > 0) {
         bug.shouts -= 1;
         bug.mating = true;
     }
@@ -197,8 +217,8 @@ var bugGrowth = function (dt, bug) {
     if (bug.size.x < bug.sizeMax && !bug.dying ) {
         // change this if changing the bug.age dt divisor above.
         // need to use proper constants!!
-        bug.size.x += 0.001;
-        bug.size.y += 0.001;
+        bug.size.x += bug.growthFactor;
+        bug.size.y += bug.growthFactor;
     } else if (bug.size.x > bug.sizeMax) {
         // prevent the bug from growing larger
         bug.size.x = bug.sizeMax;
