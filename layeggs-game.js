@@ -1,7 +1,12 @@
+var getRandomInt = function (min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+};
+
 var Game = function() {
     this.width = 500;
     this.height = 500;
     this.c = new Coquette(this, "canvas", this.width, this.height, "#CFC");
+    this.c.lastBug = 0;
 
     FemBug(this, {
         center: {x: 50, y: 50},
@@ -19,11 +24,12 @@ var Game = function() {
 
 var Bug = function (game, settings) {
     this.c = game.c;
+    this.c.lastbug = this;
     this.player = false;
-    this.center = { x: 0, y: 0 };
+    //this.center = { x: 0, y: 0 };
     this.dest = { x: 0, y: 0 };
     this.vel = { x: 0, y: 0 };
-    this.size = { x: 0, y: 0 };
+    //this.size = { x: 0, y: 0 };
     this.sizeMax = 0;
     this.speed = 0;
     this.acc = 0;
@@ -55,6 +61,7 @@ var FemBug = function (game, settings) {
         sizeMax: 10,
         fem: true,
         eggs: 5,
+        fertilized: false,
         speed: 5,
         acc: 2,
         ageMax: 10
@@ -76,7 +83,7 @@ var MalBug = function (game, settings) {
     });
 };
 
-/*
+/* let's draw the number of bugs on the canvas
 var Counter = function (game, settings) {
     this.c = game.c;
     //this.location = { x:
@@ -133,8 +140,8 @@ var layEgg = function (bug) {
 var matingCall = function (bug) {};
 
 var bugGrowth = function (dt, bug) {
-    bug.age += dt/20000;
-    if (bug.size.x < bug.sizeMax) {
+    bug.age += dt/1000;
+    if (bug.size.x < bug.sizeMax && !bug.dying ) {
         bug.size.x = bug.age * 2;
         bug.size.y = bug.age * 2;
     }
@@ -142,7 +149,24 @@ var bugGrowth = function (dt, bug) {
         bug.size.x = bug.sizeMax;
         bug.size.y = bug.sizeMax;
     }
-    if (bug.age > 2) { bug.color = '#224'; }
+    var intcolor = parseInt(bug.color.substr(1), 16);
+    if (bug.age > 2 && intcolor > 548) {
+        intcolor -= 128;
+        if (intcolor < 548) {intcolor = 548;}
+        bug.color = '#' + intcolor.toString(16);
+    } else if (bug.age >= bug.ageMax) {
+        bug.dying = true;
+        bug.size.x -= 1;
+        bug.size.y -= 1;
+        if (bug.dying && bug.size.x < 1) {
+            console.log('selecting new bug');
+            if (bug.player) {
+                bug.player = false;
+                bug.c.lastbug.player = true;
+            }
+            bug.c.entities.destroy(bug);
+        }
+    }
 };
 
 var bugMovement = function (dt, bug) {
