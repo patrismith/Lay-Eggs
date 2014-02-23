@@ -2,7 +2,7 @@
 // But I'm not doing the math right, or something.
 // So this constant should stay at 100 until I fix it.
 var gameSpeed = 100;
-var ageOfConsent = 1.5;
+var ageOfConsent = 1.1;
 
 var getRandomInt = function (min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -36,7 +36,7 @@ var Start = function () {
 var Button = function (game, settings) {
     this.c = game.c;
     this.mouseover = false;
-    this.color = '#224';
+    this.color = '#557';
     this.draw = function (ctx) {
         drawButton(ctx, this)
     };
@@ -61,7 +61,7 @@ var StartButton = function (game, settings) {
 
 var Text = function (game, settings) {
     this.c = game.c;
-    this.color = '#224';
+    this.color = '#557';
     this.draw = function (ctx) {
         drawText(ctx, this)
     };
@@ -88,17 +88,17 @@ var drawText = function (ctx, text) {
 var drawButton = function (ctx, button) {
     ctx.beginPath();
     ctx.rect(button.mouseover.x, button.mouseover.y, button.mouseover.w, button.mouseover.h);
+    ctx.strokeStyle = button.color;
     ctx.stroke();
     ctx.fillStyle = button.color;
     ctx.font = "20pt Sans";
     ctx.fillText(button.content, button.anchor.x, button.anchor.y);
 };
 
-var gameOver = function (game) {
+var gameOver = function (game, text, x) {
     game.c.entities.create(Text, {
-        content: 'You have lost. Reload to restart.',
-        anchor: {x: 250, y: 250},
-        mouseover: {x: 230, y: 230, w: 100, h: 50}
+        content: text,
+        anchor: {x: x, y: 250}
     });
 }
 
@@ -109,10 +109,10 @@ var updateButton = function (dt, button) {
         && position.y > button.mouseover.y
         && position.x < button.mouseover.x + button.mouseover.w
         && position.y < button.mouseover.y + button.mouseover.h) {
-        button.color = '#557';
+        button.color = '#99A';
         this.mouseover = true;
     } else {
-        button.color = '#224';
+        button.color = '#557';
         this.mouseover = false;
     }
     if (this.mouseover) {
@@ -126,6 +126,7 @@ var Game = function () {
     this.height = 500;
     this.c = new Coquette(this, "canvas", this.width, this.height, "#CFC");
     this.c.lastBug = 'whatever';
+    this.c.player = true;
     FemBug(this, {
         center: {x: 50, y: 50},
         dest: {x: 40, y: 40},
@@ -133,7 +134,17 @@ var Game = function () {
     });
     MalBug(this, {
         center: {x: 150, y: 150},
-        dest: {x: 150, y: 160},
+        dest: {x: 160, y: 160},
+        player: false
+    });
+    FemBug(this, {
+        center: {x: 50, y: 300},
+        dest: {x: 40, y: 310},
+        player: false
+    });
+    MalBug(this, {
+        center: {x: 400, y: 25},
+        dest: {x: 390, y: 35},
         player: false
     });
     this.c.entities.create(SquareSpawner, {});
@@ -183,10 +194,10 @@ var FemBug = function (game, settings) {
         fertilized: false,
         speed: 5,
         acc: 2,
-        ageMax: gameSpeed / 10,
+        ageMax: 4,
         eggTimer: 0,
         laidFem: false,
-        growthFactor: gameSpeed / 100000
+        growthFactor: 0.01
     });
 };
 
@@ -203,9 +214,9 @@ var MalBug = function (game, settings) {
         halosize: 1,
         speed: 1,
         acc: 1,
-        ageMax: gameSpeed / 13,
+        ageMax: 3.5,
         matingTimer: 0,
-        growthFactor: gameSpeed / 20000
+        growthFactor: 0.05
     });
 };
 
@@ -224,23 +235,30 @@ var BugCounter = function (game, settings) {
     };
     this.update = function (dt) {
         this.content = this.c.entities.all(Bug).length;
-        if (this.content == 0) {
-            gameOver(game);
+        if (this.content == 0 && !this.c.won) {
+            gameOver(game, 'You have lost. Reload to restart.', 250);
+        };
+        if (this.content > 100) {
+            this.c.won = true
+            for (i = 0; i < this.c.entities.all(Bug).length; i++) {
+                this.c.entities.all(Bug)[i].dying = true;
+            }
+            gameOver(game, 'You reached 100.', 50);
         };
     };
 };
 
 var SquareSpawner = function (game, settings) {
     this.c = game.c;
-    this.interval = gameSpeed * 20;
-    this.multiplier = 0.95;
+    this.interval = 2000;
+    this.multiplier = 0.5;
     this.spawnTimer = this.interval;
     this.update = function (dt) {
         this.spawnTimer -= 1;
         if (this.spawnTimer < 0) {
-            if (this.interval > (gameSpeed * 50) / 25) {
+            if (this.interval > 150) {
                 this.interval *= this.multiplier;
-            } else { this.interval = (gameSpeed * 50) / 25; }
+            } else { this.interval = 150; }
             this.spawnTimer = this.interval;
             spawnSquare(this);
         }
@@ -259,7 +277,7 @@ var spawnSquare = function (spawner) {
             y = 550;
         }
     }
-    var size = getRandomInt(5, 15);
+    var size = getRandomInt(10, 20);
     spawner.c.entities.create(Square, {
         center: { x: x, y: y },
         size: { x: size, y: size },
@@ -274,7 +292,7 @@ var Square = function (game, settings) {
     this.speed = 0.5;
     this.acc = 0.25;
     this.friction = 0.5;
-    this.color = '#224';
+    this.color = '#D01';
     this.isSquare = true;
     this.boundingBox = this.c.collider.RECTANGLE;
     this.draw = function (ctx) {
@@ -290,15 +308,6 @@ var Square = function (game, settings) {
         this[i] = settings[i];
     }
 };
-
-/* let's draw the number of bugs on the canvas
-var Counter = function (game, settings) {
-    this.c = game.c;
-    //this.location = { x:
-    this.draw = function (ctx) {};
-    this.update = function (dt) {};
-};
-*/
 
 var drawPlayerHalo = function (ctx, bug) {
     ctx.beginPath();
@@ -384,7 +393,7 @@ var aiControl = function (dt, bug) {
     }
     if (bug.fem) {
         if (bug.fertilized && bug.eggs > 0) {
-            bug.eggTimer += dt/(gameSpeed*20);
+            bug.eggTimer += dt/500;
             if (bug.eggTimer > (gameSpeed/10)) {
                 layEgg(bug);
                 bug.eggTimer = 0;
@@ -427,7 +436,7 @@ var matingCall = function (bug) {
 var bugGrowth = function (dt, bug) {
     // dividing by 200 is very quick
     // dividing by 200000 is very slow
-    bug.age += dt/(gameSpeed*200);
+    bug.age += dt/20000;
     // grow the bug
     if (bug.size.x < bug.sizeMax && !bug.dying ) {
         // change this if changing the bug.age dt divisor above.
@@ -442,9 +451,9 @@ var bugGrowth = function (dt, bug) {
     // age the bug
     var intcolor = parseInt(bug.color.substr(1), 16);
     // change color at certain age
-    if (bug.age > ageOfConsent && intcolor > 548) {
+    if (bug.age > ageOfConsent && intcolor > 1367) {
         intcolor -= 128;
-        if (intcolor < 548) {intcolor = 548;}
+        if (intcolor < 1367) {intcolor = 1367;}
         bug.color = '#' + intcolor.toString(16);
     } else if (bug.age >= bug.ageMax) {
         // shrink the bug until it's no more
@@ -460,8 +469,27 @@ var bugDeath = function(bug) {
     if (bug.dying && bug.size.x < 1) {
         if (bug.player) {
             bug.player = false;
-            if (bug.c.lastbug) {
+            /*
+            bug.c.player = false;
+            if (bug.c.lastbug.age) {
+                console.log('got a player!');
                 bug.c.lastbug.player = true;
+                bug.c.player = true;
+            } else {
+                var buglist = bug.c.entities.all(Bug);
+                for (i = 0; i < buglist.length; i++) {
+                    console.log('got a player');
+                    buglist[i].player = true;
+                    buglist[i].c.player = true;
+                    if (i != 0) {
+                        buglist[i].c.lastbug = buglist[i-1].player;
+                        buglist[i-1].player = false;
+                    }
+                }
+            }
+            */
+            if (bug.c.entities.all(Bug)[1]) {
+                bug.c.entities.all(Bug)[1].player = true;
             }
         }
         bug.c.entities.destroy(bug);
