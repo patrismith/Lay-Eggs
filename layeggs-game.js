@@ -1,9 +1,13 @@
-// from stackoverflow
+// TODO: I tried to make the game speed control all numerical constants.
+// But I'm not doing the math right, or something.
+// So this constant should stay at 100 until I fix it.
+var gameSpeed = 100;
+var ageOfConsent = 1.5;
+
 var getRandomInt = function (min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
 };
 
-// from html5canvastutorials
 var wrapText = function (context, text, x, y, maxWidth, lineHeight) {
     var words = text.split(' ');
     var line = '';
@@ -27,34 +31,6 @@ var Start = function () {
     this.height = 500;
     this.c = new Coquette(this, "canvas", this.width, this.height, "#CFC");
     StartButton(this, {});
-    HelpText(this, {
-        anchor: {x: 20, y: 20},
-        content: 'You are the Circle species. Your goal is to wipe out the Square species.'
-    });
-    HelpText(this, {
-        anchor: {x: 20, y: 80},
-        content: 'To move, click anywhere on this canvas.'
-    });
-    HelpText(this, {
-        anchor: {x: 20, y: 120},
-        content: 'To lay eggs or perform a mating call, press the space bar.'
-    });
-    HelpText(this, {
-        anchor: {x: 20, y: 160},
-        content: 'The female only gets five eggs. You must be fertilized to lay eggs. Collide with a male Circle performing the mating call to become fertilized.'
-    });
-    HelpText(this, {
-        anchor: {x: 20, y: 250},
-        content: 'The male only gets one mating call. Collide with a female Circle to fertilize.'
-    });
-    HelpText(this, {
-        anchor: {x: 20, y: 300},
-        content: 'Collide with a Square to destroy it. This will also destroy you.'
-    });
-    HelpText(this, {
-        anchor: {x: 20, y: 300},
-        content: 'When you die, control will switch to the youngest member of the Circle species.'
-    });
 };
 
 var Button = function (game, settings) {
@@ -74,9 +50,12 @@ var Button = function (game, settings) {
 
 var StartButton = function (game, settings) {
     game.c.entities.create(Button, {
-        content: 'Start',
-        anchor: {x: 400, y: 400},
-        mouseover: {x: 390, y: 370, w: 75, h: 45}
+        content: 'Lay Eggs',
+        anchor: {x: 250, y: 250},
+        mouseover: {x: 220, y: 220, w: 75, h: 45},
+        action: function () {
+            new Game();
+        }
     });
 };
 
@@ -107,13 +86,21 @@ var drawText = function (ctx, text) {
 }
 
 var drawButton = function (ctx, button) {
-    //ctx.beginPath();
-    //ctx.rect(button.mouseover.x, button.mouseover.y, button.mouseover.w, button.mouseover.h);
-    //ctx.stroke();
+    ctx.beginPath();
+    ctx.rect(button.mouseover.x, button.mouseover.y, button.mouseover.w, button.mouseover.h);
+    ctx.stroke();
     ctx.fillStyle = button.color;
     ctx.font = "20pt Sans";
     ctx.fillText(button.content, button.anchor.x, button.anchor.y);
 };
+
+var gameOver = function (game) {
+    game.c.entities.create(Text, {
+        content: 'You have lost. Reload to restart.',
+        anchor: {x: 250, y: 250},
+        mouseover: {x: 230, y: 230, w: 100, h: 50}
+    });
+}
 
 var updateButton = function (dt, button) {
     var position = button.c.inputter.getMousePosition();
@@ -130,7 +117,7 @@ var updateButton = function (dt, button) {
     }
     if (this.mouseover) {
         button.c = null;
-        new Game(false);
+        button.action();
     }
 };
 
@@ -138,8 +125,7 @@ var Game = function () {
     this.width = 500;
     this.height = 500;
     this.c = new Coquette(this, "canvas", this.width, this.height, "#CFC");
-    this.c.lastBug = 0;
-
+    this.c.lastBug = 'whatever';
     FemBug(this, {
         center: {x: 50, y: 50},
         dest: {x: 40, y: 40},
@@ -150,35 +136,32 @@ var Game = function () {
         dest: {x: 150, y: 160},
         player: false
     });
-
-    //this.c.entities.create(Counter, {});
-
+    this.c.entities.create(SquareSpawner, {});
+    this.c.entities.create(BugCounter, {});
 };
 
 var Bug = function (game, settings) {
     this.c = game.c;
     this.c.lastbug = this;
     this.player = false;
-    //this.center = { x: 0, y: 0 };
     this.moveTimer = 0;
     this.dest = { x: 0, y: 0 };
     this.vel = { x: 0, y: 0 };
-    //this.size = { x: 0, y: 0 };
     this.sizeMax = 0;
     this.speed = 0;
     this.acc = 0;
     this.age = 1;
     this.ageMax = 0;
     this.friction = 0.5;
-    this.fem = true;
+    this.isBug = true;
     this.color = '#FFF';
+    this.boundingBox = this.c.collider.CIRCLE;
     this.draw = function (ctx) {
         drawBug(ctx, this);
     };
     this.collision = function (other, type) {
         collideBug(this, other, type);
     };
-    //this.uncollision = function () {};
     this.update = function (dt) {
         updateBug(dt, this);
     };
@@ -200,10 +183,10 @@ var FemBug = function (game, settings) {
         fertilized: false,
         speed: 5,
         acc: 2,
-        ageMax: 10,
+        ageMax: gameSpeed / 10,
         eggTimer: 0,
         laidFem: false,
-        growthFactor: 0.001
+        growthFactor: gameSpeed / 100000
     });
 };
 
@@ -220,10 +203,92 @@ var MalBug = function (game, settings) {
         halosize: 1,
         speed: 1,
         acc: 1,
-        ageMax: 7,
+        ageMax: gameSpeed / 13,
         matingTimer: 0,
-        growthFactor: 0.005
+        growthFactor: gameSpeed / 20000
     });
+};
+
+var BugCounter = function (game, settings) {
+    this.c = game.c;
+    this.content = 2;
+    this.color = '#FFF';
+    this.anchor = {x: 420, y: 470};
+    this.draw = function (ctx) {
+        //ctx.beginPath();
+        //ctx.rect(button.mouseover.x, button.mouseover.y, button.mouseover.w, button.mouseover.h);
+        //ctx.stroke();
+        ctx.fillStyle = this.color;
+        ctx.font = "20pt Sans";
+        ctx.fillText(this.content, this.anchor.x, this.anchor.y);
+    };
+    this.update = function (dt) {
+        this.content = this.c.entities.all(Bug).length;
+        if (this.content == 0) {
+            gameOver(game);
+        };
+    };
+};
+
+var SquareSpawner = function (game, settings) {
+    this.c = game.c;
+    this.interval = gameSpeed * 20;
+    this.multiplier = 0.95;
+    this.spawnTimer = this.interval;
+    this.update = function (dt) {
+        this.spawnTimer -= 1;
+        if (this.spawnTimer < 0) {
+            if (this.interval > (gameSpeed * 50) / 25) {
+                this.interval *= this.multiplier;
+            } else { this.interval = (gameSpeed * 50) / 25; }
+            this.spawnTimer = this.interval;
+            spawnSquare(this);
+        }
+    };
+};
+
+var spawnSquare = function (spawner) {
+    var x;
+    var y;
+    x = getRandomInt(-50, 550);
+    y = getRandomInt(-50, 550);
+    if (x > -10 && x < 510) {
+        if (y < 250) {
+            y = -50;
+        } else {
+            y = 550;
+        }
+    }
+    var size = getRandomInt(5, 15);
+    spawner.c.entities.create(Square, {
+        center: { x: x, y: y },
+        size: { x: size, y: size },
+        dest: { x: getRandomInt(0, 500) , y: getRandomInt(0, 500) }
+    });
+};
+
+var Square = function (game, settings) {
+    this.c = game.c;
+    this.dest = { x: 0, y: 0};
+    this.vel = { x: 0, y: 0};
+    this.speed = 0.5;
+    this.acc = 0.25;
+    this.friction = 0.5;
+    this.color = '#224';
+    this.isSquare = true;
+    this.boundingBox = this.c.collider.RECTANGLE;
+    this.draw = function (ctx) {
+        drawSquare(ctx, this);
+    };
+    this.collision = function (other, type) {
+        collideSquare(this, other, type);
+    };
+    this.update = function (dt) {
+        updateSquare(dt, this);
+    };
+    for (var i in settings) {
+        this[i] = settings[i];
+    }
 };
 
 /* let's draw the number of bugs on the canvas
@@ -262,18 +327,42 @@ var drawBug = function (ctx, bug) {
     if (bug.mating) { drawMatingHalo(ctx, bug); }
 };
 
+var drawSquare = function (ctx, square) {
+    ctx.beginPath();
+    ctx.rect(square.center.x-square.size.x/2, square.center.y-square.size.y/2, square.size.x, square.size.y);
+    ctx.fillStyle = square.color;
+    ctx.fill();
+};
+
 var updateBug = function (dt, bug) {
     if (bug.player) { playerControl(dt, bug); }
     else { aiControl(dt, bug); }
+    if (!bug.fem && bug.mating) {
+        bug.matingTimer += dt/(gameSpeed*20);
+        if (bug.matingTimer > (gameSpeed/10)) {
+            bug.mating = false;
+            bug.matingTimer = 0;
+        }
+    }
     bugGrowth(dt, bug);
     bugMovement(dt, bug);
 };
 
+var updateSquare = function (dt, square) {
+    if (square.dying) { bugDeath(square); }
+    bugMovement(dt, square);
+};
+
 var collideBug = function (bug, other, type) {
-    if (type === bug.c.collider.INITIAL) {
-        if (bug.fem && bug.age > 2 && other.mating) {
-            bug.fertilized = true;
-        }
+    if (bug.fem && bug.age > ageOfConsent && other.mating) {
+        bug.fertilized = true;
+    }
+};
+
+var collideSquare = function (square, other, type) {
+    if (other.isBug) {
+        square.dying = true;
+        other.dying = true;
     }
 };
 
@@ -288,36 +377,30 @@ var playerControl = function (dt, bug) {
 };
 
 var aiControl = function (dt, bug) {
-    bug.moveTimer += dt/2000;
-    if (bug.moveTimer > 2) {
+    bug.moveTimer += dt/(gameSpeed*20);
+    if (bug.moveTimer > (gameSpeed / 50)) {
         bug.dest = { x: getRandomInt(0, 500), y: getRandomInt(0, 500) };
         bug.moveTimer = 0;
     }
     if (bug.fem) {
         if (bug.fertilized && bug.eggs > 0) {
-            bug.eggTimer += dt/2000;
-            if (bug.eggTimer > 10) {
+            bug.eggTimer += dt/(gameSpeed*20);
+            if (bug.eggTimer > (gameSpeed/10)) {
                 layEgg(bug);
                 bug.eggTimer = 0;
             }
         }
     } else {
-        if (bug.mating) {
-            bug.matingTimer += dt/2000;
-            if (bug.matingTimer > 10) {
-                bug.mating = false;
-                bug.matingTimer = 0;
-            }
-        }
-        if (bug.age > 2 && bug.shouts > 0 && !bug.mating) {
+        if (bug.age > ageOfConsent*2 && bug.shouts > 0 && !bug.mating) {
             matingCall(bug);
         }
     }
 };
 
 var layEgg = function (bug) {
-    if (bug.age > 2 && bug.fertilized && bug.eggs > 0) {
+    if (bug.age > ageOfConsent && bug.fertilized && bug.eggs > 0) {
         bug.eggs -= 1;
+        bug.c.bugCount += 1;
         if (bug.laidFem) {
             MalBug(bug, {
             center: { x: bug.center.x, y: bug.center.y },
@@ -335,7 +418,7 @@ var layEgg = function (bug) {
 };
 
 var matingCall = function (bug) {
-    if (bug.age > 4 && bug.shouts > 0) {
+    if (bug.age > ageOfConsent && bug.shouts > 0) {
         bug.shouts -= 1;
         bug.mating = true;
     }
@@ -344,7 +427,7 @@ var matingCall = function (bug) {
 var bugGrowth = function (dt, bug) {
     // dividing by 200 is very quick
     // dividing by 200000 is very slow
-    bug.age += dt/20000;
+    bug.age += dt/(gameSpeed*200);
     // grow the bug
     if (bug.size.x < bug.sizeMax && !bug.dying ) {
         // change this if changing the bug.age dt divisor above.
@@ -359,7 +442,7 @@ var bugGrowth = function (dt, bug) {
     // age the bug
     var intcolor = parseInt(bug.color.substr(1), 16);
     // change color at certain age
-    if (bug.age > 2 && intcolor > 548) {
+    if (bug.age > ageOfConsent && intcolor > 548) {
         intcolor -= 128;
         if (intcolor < 548) {intcolor = 548;}
         bug.color = '#' + intcolor.toString(16);
@@ -367,15 +450,21 @@ var bugGrowth = function (dt, bug) {
         // shrink the bug until it's no more
         // switch player if necessary, and delete the bug
         bug.dying = true;
-        bug.size.x -= 1;
-        bug.size.y -= 1;
-        if (bug.dying && bug.size.x < 1) {
-            if (bug.player) {
-                bug.player = false;
+    }
+    if (bug.dying) { bugDeath(bug); }
+};
+
+var bugDeath = function(bug) {
+    bug.size.x -= 1;
+    bug.size.y -= 1;
+    if (bug.dying && bug.size.x < 1) {
+        if (bug.player) {
+            bug.player = false;
+            if (bug.c.lastbug) {
                 bug.c.lastbug.player = true;
             }
-            bug.c.entities.destroy(bug);
         }
+        bug.c.entities.destroy(bug);
     }
 };
 
