@@ -4,29 +4,40 @@
     <meta charset="utf-8">
     <title>Lay Eggs</title>
     <link type="text/css" rel="stylesheet" href="style.css"></link>
-    <script src="coquette.js"></script>
+    <script src="coquette-min.js"></script>
     <script src="layeggs-game.js"></script>
     <script type="text/javascript"> window.addEventListener('load', function () { new Start(false); }); </script>
   </head>
   <body>
+    <audio src="layeggs.ogg" autoplay>
+      Your browser does not support the <code>audio</code> element.
+    </audio>
     <div>
-    <canvas id="canvas"></canvas>
+    <a href="index-mute.html">Version without audio</a>
+    <div class="game"><canvas id="canvas"></canvas></div>
     <div class="instructions">
       <div class="controls"><p>Controls:</p>
       <ul>
-      <li>Space bar: lay an egg or perform a mating call</li>
-      <li>Click the canvas: direct your circle to move to that location</li>
-      <li>Click and drag on the canvas: your circle follows the cursor</li>
+      <li><em>Space bar</em> or <em>Click bottom right corner</em>: lay an egg or perform a mating call</li>
+      <li><em>Click the canvas</em>: direct your circle to move to that location</li>
+      <li><em>Click and drag on the canvas</em>: direct your circle to follow the cursor</li>
       </ul>
 </div>
-      <p>This is a simulation of the Circle species. You will control various Circles; the one you currently control will be surrounded with a halo.</p>
-      <p>There are female and male circles. The females are quicker and smaller, and the males are larger and slower.</p>
-      <p>The female can lay a limited number of eggs in her lifetime. Once she lays them all, she gets no more.
-        The female must become fertilized first, by passing through a male performing the mating call.</p>
-      <p>The male can perform the mating call but once in his lifetime. It looks like the outline of a circle radiating from its center.</p>
-      <p>Squares begin to invade from offscreen. If a circle touches one, they both are destroyed.
-        Without your help, the squares will eventually destroy all the circles.</p>
-      <p>By strategizing, can you get the population to 100?</p>
+      <p>This is a simulation of the Circle species. You will start the game controlling one of these creatures. Your goal is to <em>increase the population to 100 individuals.</em></p>
+      <h3>Player Circle</h3><hr />
+      <p>The Circle you currently control is surrounded by a <em>yellow halo</em>. Move your Circle around the screen by <em>clicking</em> on the spot where you'd like it to go. You can also <em>click-and-drag</em> to have your Circle follow your mouse cursor.</p>
+      <p>If your Circle dies, <em>control will switch to another Circle</em>. Look for the yellow halo to identify it.</p>
+      <h3>Circle Biology</h3>
+      <p>Circles have a limited lifespan. If they survive all other hazards, they will eventually die of old age.</p>
+      <p>When Circles are born, they are very pale. Circles can reproduce once their color has darkened. There are <em>female</em> and <em>male</em> Circles. You can identify them by their size and behavior. The females are quicker and smaller. The males are larger and slower.</p>
+      <p>The female Circle can <em>lay eggs</em> that hatch into baby Circles. In order to lay them, she must first be <em>fertilized</em> by a male Circle while he performs the <em>mating call</em>. This is accomplished by <em>colliding</em> or passing through the male Circle's body.</p>
+      <p>The male can perform the <em>mating call</em> but once in his lifetime. It looks like an outline radiating from its center. Any female Circle of sufficient age who passes within him will become <em>fertile</em>, and able to lay her eggs.</p>
+      <p>If you are playing as a female Circle, <em>press the space bar</em> or <em>tap the bottom right corner</em> to lay an egg. If you are playing as a male Circle, press the space bar to perform the mating call. Warning! An individual Circle only gets <em>one mating call</em> or <em>five eggs</em> for the duration of their existence.</p>
+      <h3>Enemies of the Circle</h3>
+      <p><em>Squares</em> will begin to invade from offscreen. If a circle touches one, they both are <em>destroyed</em>.</p>
+      <p>Without your help, the squares will eventually destroy all the circles. By strategizing, can you get the population to 100?</p>
+      <h3>Credits</h3>
+      <p><em>Lay Eggs</em> was created for the <a href="http://www.ludumdare.com/compo/2014/02/15/minild-49/">Mini Ludum Dare 49 competition</a>. Code and art was created by <a href="http://patrismith.net">P. Smith</a> (as pancakecity) and the background song was created by S. Duda. Code is under the <a href="http://opensource.org/licenses/MIT">MIT</a> license, and all game assets are copyrighted to their respective creators. We made extensive use of <a href="http://coquette.maryrosecook.com">Coquette</a>, a Javascript micro-framework.</p>
     </div>
     </div>
   </body>

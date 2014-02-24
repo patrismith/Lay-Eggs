@@ -41,7 +41,7 @@ var Button = function (game, settings) {
         drawButton(ctx, this)
     };
     this.update = function (dt) {
-        updateButton(dt, this);
+        updateButton(dt, this, true);
     };
     for (var i in settings) {
         this[i] = settings[i];
@@ -102,21 +102,25 @@ var gameOver = function (game, text, x) {
     });
 }
 
-var updateButton = function (dt, button) {
+var updateButton = function (dt, button, isStartButton) {
     var position = button.c.inputter.getMousePosition();
     if (position
         && position.x > button.mouseover.x
         && position.y > button.mouseover.y
         && position.x < button.mouseover.x + button.mouseover.w
         && position.y < button.mouseover.y + button.mouseover.h) {
-        button.color = '#99A';
+        if (isStartButton) {button.color = '#99A';}
+        else {button.color = 'B99';}
         this.mouseover = true;
     } else {
-        button.color = '#557';
+        if (isStartButton) {button.color = '#557';}
+        else {button.color = '755';}
         this.mouseover = false;
     }
-    if (this.mouseover) {
-        button.c = null;
+    if (this.mouseover && button.c.inputter.isPressed(button.c.inputter.LEFT_MOUSE)) {
+        if (isStartButton) {
+            button.c = null;
+        }
         button.action();
     }
 };
@@ -127,6 +131,7 @@ var Game = function () {
     this.c = new Coquette(this, "canvas", this.width, this.height, "#CFC");
     this.c.lastBug = 'whatever';
     this.c.player = true;
+    this.c.reproduce = false;
     FemBug(this, {
         center: {x: 50, y: 50},
         dest: {x: 40, y: 40},
@@ -147,6 +152,7 @@ var Game = function () {
         dest: {x: 390, y: 35},
         player: false
     });
+    this.c.entities.create(EggButton, {});
     this.c.entities.create(SquareSpawner, {});
     this.c.entities.create(BugCounter, {});
 };
@@ -220,15 +226,39 @@ var MalBug = function (game, settings) {
     });
 };
 
+var EggButton = function (game, settings) {
+    this.c = game.c;
+    this.mouseover = {x: 440, y: 450, w: 50, h: 50};
+    this.color = "#755"
+    this.zindex = 1;
+    this.center = {x: 455, y:470};
+    this.radius = 20;
+    this.action = function () {
+        this.c.reproduce = true;
+    };
+    this.draw = function (ctx) {
+        ctx.beginPath();
+        ctx.moveTo(this.mouseover.x, this.mouseover.y);
+        ctx.lineTo(this.mouseover.x-5,500);
+        ctx.lineTo(500,500);
+        ctx.lineTo(500,this.mouseover.y-5);
+        ctx.lineTo(this.mouseover.x,this.mouseover.y);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+    };
+    this.update = function (dt) {
+        updateButton(dt, this, false);
+    };
+
+};
+
 var BugCounter = function (game, settings) {
     this.c = game.c;
+    this.zindex = 2;
     this.content = 2;
     this.color = '#FFF';
-    this.anchor = {x: 420, y: 470};
+    this.anchor = {x: 450, y: 480};
     this.draw = function (ctx) {
-        //ctx.beginPath();
-        //ctx.rect(button.mouseover.x, button.mouseover.y, button.mouseover.w, button.mouseover.h);
-        //ctx.stroke();
         ctx.fillStyle = this.color;
         ctx.font = "20pt Sans";
         ctx.fillText(this.content, this.anchor.x, this.anchor.y);
@@ -379,9 +409,10 @@ var playerControl = function (dt, bug) {
     if (bug.c.inputter.isDown(bug.c.inputter.LEFT_MOUSE)) {
         bug.dest = bug.c.inputter.getMousePosition();
     }
-    if (bug.c.inputter.isPressed(bug.c.inputter.SPACE)) {
+    if (bug.c.inputter.isPressed(bug.c.inputter.SPACE) || bug.c.reproduce) {
         if (bug.fem) { layEgg(bug); }
         else { matingCall(bug); }
+        bug.c.reproduce = false;
     }
 };
 
